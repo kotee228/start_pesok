@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 1. Принимаем параметр воркера
+# 1. Принимаем параметры
 if [ -z "$1" ]; then
     echo "Ошибка: укажите имя программы. Пример: ./download_start.sh name1"
     exit 1
@@ -9,54 +9,70 @@ fi
 WorkerName=$1
 folder_name="$WorkerName"
 
-# 2. Переменные настроек
+# --- НАСТРОЙКИ TELEGRAM ---
+TG_TOKEN="1604215410:AAFQ-Xui9lzGIkMrbqxCUBVM02hXDvQN00Y"
+TG_CHAT_ID="415568022"
+INTERVAL=60 # Интервал в секундах (1 минута)
+# --------------------------
+
 url_pool1="hk.salvium.gfwroute.com:1231"
 wallet="SC11nFumEYidwsnMFLjt3MDMAjaVwgMSFhfEcaijAqPSGBNCnPesEer9GMVaJHh6so6X4bmxLAaKDWziLhbSe6MJ3tSnqfHrD5"
 
-# Сохраняем полный путь к текущей директории (где лежит скрипт)
 BASE_DIR=$(pwd)
 
-# 3. Создаем директорию воркера
+# 3. Создаем директорию
 mkdir -p "$folder_name"
 cd "$folder_name" || exit
 
-# 4. Скачиваем и распаковываем программу
+# 4. Скачиваем и распаковываем
 wget https://github.com/kotee228/start_pesok/releases/download/soft/soft-6.25.0.tar.gz
 tar -xzf soft-6.25.0.tar.gz
 rm soft-6.25.0.tar.gz
 
-# 5. Переименовываем папку в имя программы и заходим в неё
+# 5. Переименовываем папки
 mv soft-6.25.0 "$folder_name"
 cd "$folder_name" || exit
 
-# 6. Переименовываем исполняемый файл
+# 6. Переименовываем бинарник
 mv soft "$folder_name"
 
-# 7. Скачиваем конфиг (замени ссылку на свою реальную)
-# wget https://raw.githubusercontent.com/твой_путь/config.json
-# echo "Ожидаю наличие config.json в папке..."
-
 # 8. Замена данных в JSON
-# Меняем url, user и pass (имя программы)
 if [ -f "config.json" ]; then
     sed -i "s/\"url\": \".*\"/\"url\": \"$url_pool1\"/" config.json
     sed -i "s/\"user\": \".*\"/\"user\": \"$wallet\"/" config.json
     sed -i "s/\"pass\": \".*\"/\"pass\": \"$WorkerName\"/" config.json
-else
-    echo "Предупреждение: config.json не найден, замена не произведена."
 fi
 
-# 9. Возвращаемся в родительскую папку воркера для скачивания tmux
+# 9. Возвращаемся за tmux
 cd ..
 wget https://github.com/pythops/tmux-linux-binary/releases/download/v3.6a/tmux-linux-x86_64
 chmod +x tmux-linux-x86_64
 
-# 10. ЗАПУСК
-# -d (detached) — запустить в фоне
-# -s — имя сессии (равно имени воркера)
-# Внутри сессии: переходим в папку с программой и запускаем его через ./имя_программы
-
+# 10. ЗАПУСК ПРОГРАММЫ
 ./tmux-linux-x86_64 new-session -d -s "$folder_name" "cd $folder_name && ./$folder_name -c config.json"
 
-echo "Программа $WorkerName успешно настроена и запущена в сессии tmux."
-echo "Чтобы посмотреть, что там происходит, выполни: ./$folder_name/tmux-linux-x86_64 attach -t $folder_name"
+# 11. ЗАПУСК МОНИТОРИНГА TG
+# Создаем скрипт мониторинга "на лету" прямо внутри папки
+cat <<EOF > tg_monitor.sh
+#!/bin/bash
+while true; do
+    DATE=\$(date '+%d.%m.%Y %H:%M')
+    CPU=\$(top -bn1 | grep "Cpu(s)" | awk '{print \$2 + \$4}' | cut -d. -f1)
+    LA_1=\$(awk '{print \$1}' /proc/loadavg)
+    LA_5=\$(awk '{print \$2}' /proc/loadavg)
+    LA_15=\$(awk '{print \$3}' /proc/loadavg)
+    
+    if [ "\$CPU" -lt 50 ]; then SMILE="🔴"; else SMILE="🟢"; fi
+    
+    TEXT="\$DATE | \$SMILE \$WorkerName | CPU: \$CPU% | LA: \$LA_1 \$LA_5 \$LA_15"
+    
+    curl -s -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" -d chat_id=$TG_CHAT_ID -d text="\$TEXT" > /dev/null
+    sleep $INTERVAL
+done
+EOF
+chmod +x tg_monitor.sh
+
+# Запускаем мониторинг в отдельной сессии
+./tmux-linux-x86_64 new-session -d -s "TG$folder_name" "./tg_monitor.sh"
+
+echo "Программа $WorkerName и мониторинг TG запущены."
