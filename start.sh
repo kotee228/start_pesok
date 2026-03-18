@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# 1. Принимаем имя программы
 if [ -z "$1" ]; then
     echo "Ошибка: укажите имя программы. Пример: ./start.sh name1"
     exit 1
@@ -9,27 +8,32 @@ fi
 WorkerName=$1
 folder_name="$WorkerName"
 
-# 2. Проверяем, существует ли директория воркера
+# --- НАСТРОЙКИ TELEGRAM (должны совпадать) ---
+TG_TOKEN="1604215410:AAFQ-Xui9lzGIkMrbqxCUBVM02hXDvQN00Y"
+TG_CHAT_ID="415568022"
+INTERVAL=60
+# --------------------------
+
 if [ ! -d "$folder_name" ]; then
-    echo "Ошибка: Директория $folder_name не найдена. Сначала запусти download_start.sh"
+    echo "Ошибка: Директория $folder_name не найдена."
     exit 1
 fi
 
-# 3. Переходим в общую папку программы (где лежит tmux)
 cd "$folder_name" || exit
 
-# 4. Проверяем наличие tmux и запускаем сессию
 if [ -f "./tmux-linux-x86_64" ]; then
-    # Убиваем старую сессию с таким же именем, если она вдруг висит (чтобы не плодить ошибки)
+    # Убиваем обе сессии перед перезапуском
     ./tmux-linux-x86_64 kill-session -t "$folder_name" 2>/dev/null
+    ./tmux-linux-x86_64 kill-session -t "TG$folder_name" 2>/dev/null
 
-    # Запуск новой сессии в фоне (-d)
-    # Внутри сессии: переходим в подпапку программы и стартуем бинарник с конфигом
+    # Запуск программы
     ./tmux-linux-x86_64 new-session -d -s "$folder_name" "cd $folder_name && ./$folder_name -c config.json"
     
-    echo "Программа $WorkerName запущен в сессии tmux."
-    echo "Для просмотра введи: cd $folder_name && ./tmux-linux-x86_64 attach -t $folder_name"
+    # Запуск мониторинга (скрипт tg_monitor.sh уже создан при установке)
+    ./tmux-linux-x86_64 new-session -d -s "TG$folder_name" "./tg_monitor.sh"
+    
+    echo "Программа $WorkerName и TG мониторинг перезапущены."
 else
-    echo "Ошибка: Файл tmux-linux-x86_64 не найден в $folder_name"
+    echo "Ошибка: tmux не найден."
     exit 1
 fi
