@@ -61,7 +61,8 @@ W_NAME="$WorkerName"
 while true; do
     DATE=\$(date '+%d.%m.%Y %H:%M')
     # Получаем целое число загрузки CPU
-    CPU=\$(top -bn1 | grep "Cpu(s)" | awk '{print \$2 + \$4}' | cut -d. -f1)
+    # Делаем 2 итерации с задержкой 0.5 сек, берем вторую (она точная)
+    CPU=$(top -bn2 -d 0.5 | grep "Cpu(s)" | tail -1 | awk '{print $2 + $4}' | cut -d. -f1)
     LA_1=\$(awk '{print \$1}' /proc/loadavg)
     LA_5=\$(awk '{print \$2}' /proc/loadavg)
     LA_15=\$(awk '{print \$3}' /proc/loadavg)
