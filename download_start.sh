@@ -52,11 +52,15 @@ chmod +x tmux-linux-x86_64
 ./tmux-linux-x86_64 new-session -d -s "$folder_name" "cd $folder_name && ./$folder_name -c config.json"
 
 # 11. ЗАПУСК МОНИТОРИНГА TG
-# Создаем скрипт мониторинга "на лету" прямо внутри папки
+# Мы передаем текущее значение $WorkerName прямо в файл
 cat <<EOF > tg_monitor.sh
 #!/bin/bash
+# Фиксируем имя программы внутри этого скрипта
+W_NAME="$WorkerName"
+
 while true; do
     DATE=\$(date '+%d.%m.%Y %H:%M')
+    # Получаем целое число загрузки CPU
     CPU=\$(top -bn1 | grep "Cpu(s)" | awk '{print \$2 + \$4}' | cut -d. -f1)
     LA_1=\$(awk '{print \$1}' /proc/loadavg)
     LA_5=\$(awk '{print \$2}' /proc/loadavg)
@@ -64,7 +68,8 @@ while true; do
     
     if [ "\$CPU" -lt 50 ]; then SMILE="🔴"; else SMILE="🟢"; fi
     
-    TEXT="\$DATE | \$SMILE \$WorkerName | CPU: \$CPU% | LA: \$LA_1 \$LA_5 \$LA_15"
+    # Теперь используем зафиксированное имя W_NAME
+    TEXT="\$DATE | \$SMILE \$W_NAME | CPU: \$CPU% | LA: \$LA_1 \$LA_5 \$LA_15"
     
     curl -s -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" -d chat_id=$TG_CHAT_ID -d text="\$TEXT" > /dev/null
     sleep $INTERVAL
