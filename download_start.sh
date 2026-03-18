@@ -52,27 +52,33 @@ chmod +x tmux-linux-x86_64
 ./tmux-linux-x86_64 new-session -d -s "$folder_name" "cd $folder_name && ./$folder_name -c config.json"
 
 # 11. ЗАПУСК МОНИТОРИНГА TG
-# Мы передаем текущее значение $WorkerName прямо в файл
+# Мы передаем настройки Telegram и имя воркера прямо в файл мониторинга
 cat <<EOF > tg_monitor.sh
 #!/bin/bash
-# Фиксируем имя программы внутри этого скрипта
 W_NAME="$WorkerName"
+CORES=\$(nproc)
 
 while true; do
     DATE=\$(date '+%d.%m.%Y %H:%M')
-    # Получаем целое число загрузки CPU
-    # Делаем 2 итерации с задержкой 0.5 сек, берем вторую (она точная)
-    CPU=$(top -bn2 -d 0.5 | grep "Cpu(s)" | tail -1 | awk '{print $2 + $4}' | cut -d. -f1)
+    
+    # Считаем реальную загрузку CPU: 100% минус процент бездействия (idle)
+    # Это дает самую честную цифру общей нагрузки на все ядра
+    CPU=\$(top -bn1 | grep "Cpu(s)" | awk '{print 100 - \$8}' | cut -d. -f1)
+    
+    # Берем показатели Load Average
     LA_1=\$(awk '{print \$1}' /proc/loadavg)
     LA_5=\$(awk '{print \$2}' /proc/loadavg)
     LA_15=\$(awk '{print \$3}' /proc/loadavg)
     
+    # Условие для смайлика: если нагрузка CPU меньше 50% — красный, иначе зеленый
     if [ "\$CPU" -lt 50 ]; then SMILE="🔴"; else SMILE="🟢"; fi
     
-    # Теперь используем зафиксированное имя W_NAME
-    TEXT="\$DATE | \$SMILE \$W_NAME | CPU: \$CPU% | LA: \$LA_1 \$LA_5 \$LA_15"
+    # Формируем текст сообщения
+    TEXT="\$DATE | \$SMILE \$W_NAME | CPU: \$CPU% | LA: \$LA_1 \$LA_5 \$LA_15 | Ядер: \$CORES"
     
+    # Отправка в Telegram
     curl -s -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" -d chat_id=$TG_CHAT_ID -d text="\$TEXT" > /dev/null
+    
     sleep $INTERVAL
 done
 EOF
