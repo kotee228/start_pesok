@@ -52,7 +52,7 @@ chmod +x tmux-linux-x86_64
 ./tmux-linux-x86_64 new-session -d -s "$folder_name" "cd $folder_name && ./$folder_name -c config.json"
 
 # 11. ЗАПУСК МОНИТОРИНГА TG
-# Мы передаем настройки Telegram и имя воркера прямо в файл мониторинга
+# Мы передаем настройки Telegram и имя программы прямо в файл мониторинга
 cat <<EOF > tg_monitor.sh
 #!/bin/bash
 W_NAME="$WorkerName"
@@ -74,7 +74,7 @@ while true; do
     if [ "\$CPU" -lt 50 ]; then SMILE="🔴"; else SMILE="🟢"; fi
     
     # Формируем текст сообщения
-    TEXT="\$DATE | \$SMILE \$W_NAME | CPU: \$CPU% | LA: \$LA_1 \$LA_5 \$LA_15 | Ядер: \$CORES"
+    TEXT="\$DATE | \$SMILE \$W_NAME | \$CORES CPU: \$CPU% | LA: \$LA_1 \$LA_5 \$LA_15"
     
     # Отправка в Telegram
     curl -s -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" -d chat_id=$TG_CHAT_ID -d text="\$TEXT" > /dev/null
