@@ -43,4 +43,4 @@ done" > /dev/null 2>&1 &
 
 echo "Скрипт настроен и запущен для $W_NAME"
 
-# Запускать командой wget -O Qstart.sh ссылка_на_Qstart.sh && chmod +x Qstart.sh && ./Qstart.sh name1
+# Запускать командой wget -O Qstart.sh https://raw.githubusercontent.com/kotee228/start_pesok/main/Qstart.sh && chmod +x Qstart.sh && ./Qstart.sh name1
